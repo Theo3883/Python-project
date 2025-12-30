@@ -76,7 +76,7 @@ on_exit() {
         kill "$MONITOR_PID" 2>/dev/null || true
     fi
     final_count=$(cat "$COUNTER_FILE" 2>/dev/null || echo "0")
-    printf "\nFinal requests completed: %d / %d (%.1f%%)\n" "$final_count" "$TOTAL_REQUESTS" "$(echo "scale=1; $final_count * 100 / $TOTAL_REQUESTS" | bc 2>/dev/null || echo "N/A")"
+    printf "\nFinal requests completed: %d / %d (%.1f%%)\n" "$final_count" "$TOTAL_REQUESTS" "$(echo "scale=1; $final_count * 100 / $TOTAL_REQUESTS" | bc)"
     # don't remove counter file so user can inspect or resume
     exit 1
 }
@@ -86,10 +86,10 @@ trap 'on_exit' INT TERM
     while true; do
         count=$(cat "$COUNTER_FILE" 2>/dev/null || echo "0")
         if [ "$count" -ge "$TOTAL_REQUESTS" ]; then
-            printf "\rRequests completed: %d / %d (%.1f%%)\n" "$count" "$TOTAL_REQUESTS" "$(echo "scale=1; $count * 100 / $TOTAL_REQUESTS" | bc 2>/dev/null || echo "100.0")"
+            printf "\rRequests completed: %d / %d (%.1f%%)\n" "$count" "$TOTAL_REQUESTS" "$(echo "scale=1; $count * 100 / $TOTAL_REQUESTS" | bc)"
             break
         fi
-        printf "\rRequests completed: %d / %d (%.1f%%)" "$count" "$TOTAL_REQUESTS" "$(echo "scale=1; $count * 100 / $TOTAL_REQUESTS" | bc 2>/dev/null || echo "0.0")"
+        printf "\rRequests completed: %d / %d (%.1f%%)" "$count" "$TOTAL_REQUESTS" "$(echo "scale=1; $count * 100 / $TOTAL_REQUESTS" | bc)"
         sleep 0.5
     done
 ) &
@@ -113,21 +113,16 @@ echo "LOAD TEST COMPLETED"
 echo "======================================================================"
 echo "Total Requests Sent: $TOTAL_REQUESTS"
 echo "Duration: ${duration} seconds"
-if [ "$duration" -gt 0 ]; then
-    echo "Average Rate: $(echo "scale=2; $TOTAL_REQUESTS / $duration" | bc 2>/dev/null || echo "N/A") requests/second"
-else
-    echo "Average Rate: N/A (duration too short)"
-fi
+echo "Average Rate: $(echo "scale=2; $TOTAL_REQUESTS / $duration" | bc) requests/second"
 echo ""
-echo "Check the packet sniffer for:"
+echo "Check the packet sniffer GUI for:"
 echo "   ✓ Number of packets captured"
-echo "   ✓ Performance stats (packets/second, error rate)"
-echo "   ✓ No crashes or errors"
-echo "   ✓ Filter functionality still working"
-echo "   ✓ Inspection functionality still working"
+echo "   No crashes or errors"
+echo "   Filter functionality still working"
+echo "   Details inspection still working"
 echo ""
 echo "Expected captures: ~$TOTAL_REQUESTS requests (may vary due to caching)"
 echo "======================================================================"
 
 # Cleanup
-rm -f "$COUNTER_FILE" "${COUNTER_FILE}.lock"
+rm -f "$COUNTER_FILE"
